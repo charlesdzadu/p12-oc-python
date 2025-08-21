@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlmodel import Session, select
-from datetime import datetime
+from datetime import datetime, timezone
 from .base import BaseRepository
 from ..models.event import Event
 
@@ -22,14 +22,14 @@ class EventRepository(BaseRepository[Event]):
         return self.session.exec(statement).all()
 
     def get_upcoming_events(self) -> List[Event]:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         statement = (
             select(Event).where(Event.event_date_start > now).order_by(Event.event_date_start)
         )
         return self.session.exec(statement).all()
 
     def get_past_events(self) -> List[Event]:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         statement = (
             select(Event).where(Event.event_date_end < now).order_by(Event.event_date_end.desc())
         )

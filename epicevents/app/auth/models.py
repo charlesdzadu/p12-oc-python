@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, TYPE_CHECKING, ForwardRef
 from enum import Enum
 
@@ -25,8 +25,8 @@ class User(SQLModel, table=True):
     password_hash: str = Field(nullable=False)
     department: Department = Field(nullable=False)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     clients: List["Client"] = Relationship(back_populates="commercial")  # type: ignore
     contracts: List["Contract"] = Relationship(back_populates="commercial")  # type: ignore

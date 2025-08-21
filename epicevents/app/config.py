@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, ConfigDict
 
 
 class Settings(BaseSettings):
@@ -14,10 +14,11 @@ class Settings(BaseSettings):
     app_env: str = Field(default="development")
     debug: bool = Field(default=False)
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False
+    )
 
 
 settings = Settings()

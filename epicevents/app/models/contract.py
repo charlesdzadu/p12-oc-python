@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, TYPE_CHECKING
 from decimal import Decimal
 
@@ -15,7 +15,7 @@ class Contract(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     total_amount: Decimal = Field(nullable=False, decimal_places=2, max_digits=10)
     amount_due: Decimal = Field(nullable=False, decimal_places=2, max_digits=10)
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     signed: bool = Field(default=False)
 
     client_id: int = Field(foreign_key="clients.id", nullable=False)

@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -15,8 +15,8 @@ class Client(SQLModel, table=True):
     email: str = Field(nullable=False, unique=True, index=True)
     phone: str = Field(nullable=False)
     company_name: str = Field(nullable=False)
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     commercial_id: Optional[int] = Field(default=None, foreign_key="users.id")
     commercial: Optional["User"] = Relationship(back_populates="clients")
@@ -30,4 +30,4 @@ class Client(SQLModel, table=True):
         for key, value in kwargs.items():
             if hasattr(self, key) and value is not None:
                 setattr(self, key, value)
-        self.updated_at = datetime.now()
+        self.updated_at = datetime.now(timezone.utc)
