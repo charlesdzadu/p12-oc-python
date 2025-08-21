@@ -5,6 +5,7 @@ Integration tests for permission system
 import pytest
 from unittest.mock import patch
 from epicevents.app.auth.models import User, Department
+from epicevents.app.models import Event
 from epicevents.app.services import ClientService, ContractService, EventService
 from epicevents.app.utils.permissions import require_auth, require_department, require_permission
 from decimal import Decimal
@@ -273,6 +274,7 @@ def test_cross_department_read_access(mock_get_session, monkeypatch):
 
 def test_decorator_based_permissions():
     """Test permission decorators work correctly"""
+    from contextlib import contextmanager
 
     # Test require_auth
     @require_auth
@@ -280,7 +282,11 @@ def test_decorator_based_permissions():
         return value * 2
 
     # Without user
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=None):
+    @contextmanager
+    def mock_no_user():
+        yield None
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_no_user):
         with pytest.raises(PermissionError, match="Authentication required"):
             protected_function(5)
 
@@ -294,7 +300,11 @@ def test_decorator_based_permissions():
         department=Department.COMMERCIAL,
     )
 
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=mock_user):
+    @contextmanager
+    def mock_with_user():
+        yield mock_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_with_user):
         result = protected_function(5)
         assert result == 10
 
@@ -304,7 +314,7 @@ def test_decorator_based_permissions():
         return value * 3
 
     # Commercial user (should fail)
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=mock_user):
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_with_user):
         with pytest.raises(PermissionError, match="requires one of the following departments"):
             management_only(5)
 
@@ -318,7 +328,11 @@ def test_decorator_based_permissions():
         department=Department.MANAGEMENT,
     )
 
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=management_user):
+    @contextmanager
+    def mock_with_management():
+        yield management_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_with_management):
         result = management_only(5)
         assert result == 15
 
@@ -328,12 +342,12 @@ def test_decorator_based_permissions():
         return f"Contract: {data}"
 
     # Commercial (no permission)
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=mock_user):
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_with_user):
         with pytest.raises(PermissionError, match="don't have permission"):
             create_contract_function("test")
 
     # Management (has permission)
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=management_user):
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_with_management):
         result = create_contract_function("test")
         assert result == "Contract: test"
 

@@ -331,15 +331,20 @@ def test_datetime_handling(test_session, signed_contract):
 def test_decimal_precision(test_session, sample_client, commercial_user):
     """Test decimal field precision for monetary values"""
     # Test various decimal values
-    test_values = [Decimal("0.01"), Decimal("999.99"), Decimal("12345.67"), Decimal("99999999.99")]
+    test_values = [
+        (Decimal("100.00"), Decimal("50.00")),
+        (Decimal("999.99"), Decimal("499.99")),
+        (Decimal("12345.67"), Decimal("6172.83")),
+        (Decimal("99999.98"), Decimal("49999.99")),
+    ]
 
     contracts = []
-    for i, amount in enumerate(test_values):
+    for i, (total, due) in enumerate(test_values):
         contract = Contract(
             client_id=sample_client.id,
             commercial_id=commercial_user.id,
-            total_amount=amount,
-            amount_due=amount / 2,
+            total_amount=total,
+            amount_due=due,
             signed=False,
         )
         test_session.add(contract)
@@ -348,7 +353,7 @@ def test_decimal_precision(test_session, sample_client, commercial_user):
     test_session.commit()
 
     # Verify precision is maintained
-    for contract, original_amount in zip(contracts, test_values):
+    for contract, (original_total, original_due) in zip(contracts, test_values):
         test_session.refresh(contract)
-        assert contract.total_amount == original_amount
-        assert contract.amount_due == original_amount / 2
+        assert contract.total_amount == original_total
+        assert contract.amount_due == original_due

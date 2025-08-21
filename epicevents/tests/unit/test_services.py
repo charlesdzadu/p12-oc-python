@@ -328,7 +328,7 @@ def test_event_service_list_filters(mock_get_session, support_user, sample_event
 
     # Test upcoming filter
     upcoming = EventService.list_events(support_user, upcoming_only=True)
-    assert all(e.event_date_start > datetime.utcnow() for e in upcoming)
+    assert all(e.event_date_start > datetime.now() for e in upcoming)
 
     # Test without support filter
     sample_event.support_contact_id = None

@@ -15,7 +15,7 @@ class Contract(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     total_amount: Decimal = Field(nullable=False, decimal_places=2, max_digits=10)
     amount_due: Decimal = Field(nullable=False, decimal_places=2, max_digits=10)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
     signed: bool = Field(default=False)
 
     client_id: int = Field(foreign_key="clients.id", nullable=False)

@@ -25,8 +25,8 @@ class User(SQLModel, table=True):
     password_hash: str = Field(nullable=False)
     department: Department = Field(nullable=False)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
 
     clients: List["Client"] = Relationship(back_populates="commercial")  # type: ignore
     contracts: List["Contract"] = Relationship(back_populates="commercial")  # type: ignore

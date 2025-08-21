@@ -53,7 +53,13 @@ def test_get_current_user_no_token(temp_token_file, monkeypatch):
 
 def test_require_auth_decorator(commercial_user):
     """Test require_auth decorator"""
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=commercial_user):
+    from contextlib import contextmanager
+    
+    @contextmanager
+    def mock_get_user_with_session():
+        yield commercial_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_get_user_with_session):
 
         @require_auth
         def protected_function(value, current_user=None):
@@ -67,7 +73,13 @@ def test_require_auth_decorator(commercial_user):
 
 def test_require_auth_decorator_no_user():
     """Test require_auth decorator without authenticated user"""
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=None):
+    from contextlib import contextmanager
+    
+    @contextmanager
+    def mock_get_user_with_session():
+        yield None
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_get_user_with_session):
 
         @require_auth
         def protected_function(value, current_user=None):
@@ -79,36 +91,54 @@ def test_require_auth_decorator_no_user():
 
 def test_require_department_decorator(commercial_user, support_user):
     """Test require_department decorator"""
+    from contextlib import contextmanager
 
     @require_department(Department.COMMERCIAL, Department.MANAGEMENT)
     def commercial_only_function(value, current_user=None):
         return value * 3
 
     # Test with commercial user (allowed)
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=commercial_user):
+    @contextmanager
+    def mock_get_commercial():
+        yield commercial_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_get_commercial):
         result = commercial_only_function(4)
         assert result == 12
 
     # Test with support user (not allowed)
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=support_user):
+    @contextmanager
+    def mock_get_support():
+        yield support_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_get_support):
         with pytest.raises(PermissionError, match="requires one of the following departments"):
             commercial_only_function(4)
 
 
 def test_require_permission_decorator(commercial_user, support_user):
     """Test require_permission decorator"""
+    from contextlib import contextmanager
 
     @require_permission("create", "client")
     def create_client_function(data, current_user=None):
         return f"Created client: {data}"
 
     # Test with commercial user (has permission)
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=commercial_user):
+    @contextmanager
+    def mock_get_commercial():
+        yield commercial_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_get_commercial):
         result = create_client_function("test")
         assert result == "Created client: test"
 
     # Test with support user (no permission)
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=support_user):
+    @contextmanager
+    def mock_get_support():
+        yield support_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_get_support):
         with pytest.raises(PermissionError, match="don't have permission"):
             create_client_function("test")
 
@@ -250,6 +280,7 @@ def test_decorators_preserve_function_metadata():
 
 def test_multiple_decorators_stacking(management_user):
     """Test stacking multiple permission decorators"""
+    from contextlib import contextmanager
 
     @require_auth
     @require_department(Department.MANAGEMENT)
@@ -257,7 +288,11 @@ def test_multiple_decorators_stacking(management_user):
     def highly_protected_function(value, current_user=None):
         return value * 10
 
-    with patch("epicevents.app.utils.permissions.get_current_user", return_value=management_user):
+    @contextmanager
+    def mock_get_management():
+        yield management_user
+    
+    with patch("epicevents.app.utils.permissions.get_current_user_with_session", mock_get_management):
         result = highly_protected_function(3)
         assert result == 30
 

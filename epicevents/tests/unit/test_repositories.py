@@ -281,7 +281,7 @@ def test_event_repository_get_upcoming(test_session, signed_contract):
 
     upcoming = repo.get_upcoming_events()
     assert len(upcoming) >= 1
-    assert all(e.event_date_start > datetime.utcnow() for e in upcoming)
+    assert all(e.event_date_start > datetime.now() for e in upcoming)
 
 
 def test_event_repository_get_past(test_session, signed_contract):
@@ -302,7 +302,7 @@ def test_event_repository_get_past(test_session, signed_contract):
 
     past = repo.get_past_events()
     assert len(past) >= 1
-    assert all(e.event_date_end < datetime.utcnow() for e in past)
+    assert all(e.event_date_end < datetime.now() for e in past)
 
 
 def test_event_repository_get_date_range(test_session, signed_contract):

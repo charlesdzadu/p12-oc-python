@@ -23,7 +23,16 @@ def test_db():
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         test_db_path = f.name
 
+    # Enable foreign key constraints for SQLite
+    from sqlalchemy import event
     test_engine = create_engine(f"sqlite:///{test_db_path}")
+    
+    @event.listens_for(test_engine, "connect")
+    def set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+    
     SQLModel.metadata.create_all(test_engine)
 
     yield test_engine
